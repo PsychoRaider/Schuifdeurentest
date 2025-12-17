@@ -1,5 +1,4 @@
 
-// src/App.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
   AppBar, Toolbar, IconButton, Typography, Container, Grid, Box, CssBaseline, Tooltip, Button, Stack
@@ -123,9 +122,9 @@ export default function App() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
             <Box
               component="img"
-              src="/logo.png"       // served from public/
+              src={mode === "dark" ? "/logo.png" : "/logo.png"} // swap here if you add a dark variant
               alt="Schuifdeuren"
-              sx={{ height: 28, width: "auto" }}
+              sx={{ height: 28 }}
             />
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Prijs Calculator
@@ -175,11 +174,10 @@ export default function App() {
 
             {/* RIGHT: Combined summary */}
             <Grid item xs={12} md={5}>
-                           <CombinedSummary doors={doors} />
+              <CombinedSummary doors={doors} />
             </Grid>
           </Grid>
         </Container>
       </Box>
     </ThemeProvider>
-  );
-
+   );
