@@ -1,7 +1,17 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  AppBar, Toolbar, IconButton, Typography, Container, Grid, Box, CssBaseline, Tooltip, Button, Stack
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Container,
+  Grid,
+  Box,
+  CssBaseline,
+  Tooltip,
+  Button,
+  Stack
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -14,16 +24,25 @@ import { RULES } from "./lib/pricingRules";
 export default function App() {
   // --- Theme (robust init + persistence) ---
   const [mode, setMode] = useState(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("themeMode") : null;
-    if (stored === "light" || stored === "dark") return stored;
-    const prefersDark =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("themeMode") : null;
+      if (stored === "light" || stored === "dark") return stored;
+      const prefersDark =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return prefersDark ? "dark" : "light";
+    } catch {
+      return "light";
+    }
   });
+
   useEffect(() => {
-    try { localStorage.setItem("themeMode", mode); } catch {}
+    try {
+      localStorage.setItem("themeMode", mode);
+    } catch {
+      // ignore
+    }
   }, [mode]);
 
   const theme = useMemo(
@@ -40,7 +59,9 @@ export default function App() {
         components: {
           MuiPaper: {
             styleOverrides: {
-              root: { transition: "background-color .2s ease, color .2s ease, border-color .2s ease" }
+              root: {
+                transition: "background-color .2s ease, color .2s ease, border-color .2s ease"
+              }
             }
           },
           MuiAppBar: {
@@ -91,26 +112,33 @@ export default function App() {
 
   const [doors, setDoors] = useState([createDefaultDoor(Date.now())]);
 
-  const addDoor = () => setDoors((prev) => [...prev, createDefaultDoor(Date.now())]);
+  const addDoor = () => {
+    setDoors((prev) => [...prev, createDefaultDoor(Date.now())]);
+  };
 
-  const updateDoor = (id, updated) =>
+  const updateDoor = (id, updated) => {
     setDoors((prev) => prev.map((d) => (d.id === id ? updated : d)));
+  };
 
-  const removeDoor = (id) =>
+  const removeDoor = (id) => {
     setDoors((prev) => {
       const next = prev.filter((d) => d.id !== id);
       return next.length === 0 ? [createDefaultDoor(Date.now())] : next;
     });
+  };
 
-  const duplicateDoor = (id) =>
+  const duplicateDoor = (id) => {
     setDoors((prev) => {
       const src = prev.find((d) => d.id === id);
       if (!src) return prev;
       const clone = { ...src, id: Date.now(), collapsed: false };
       return [...prev, clone];
     });
+  };
 
-  const resetAll = () => setDoors([createDefaultDoor(Date.now())]);
+  const resetAll = () => {
+    setDoors([createDefaultDoor(Date.now())]);
+  };
 
   // --- UI ---
   return (
@@ -122,9 +150,9 @@ export default function App() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
             <Box
               component="img"
-              src={mode === "dark" ? "/logo.png" : "/logo.png"} // swap here if you add a dark variant
+              src="/logo.png" // Use /public/logo.png
               alt="Schuifdeuren"
-              sx={{ height: 28 }}
+              sx={{ height: 28, display: "block" }}
             />
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Prijs Calculator
@@ -150,7 +178,9 @@ export default function App() {
               Configureer schuifdeuren
             </Typography>
             <Stack direction="row" spacing={1}>
-              <Button variant="contained" color="primary" onClick={addDoor}>+ Voeg deur toe</Button>
+              <Button variant="contained" color="primary" onClick={addDoor}>
+                + Voeg deur toe
+              </Button>
               <Button variant="text" onClick={resetAll}>Reset alles</Button>
             </Stack>
           </Stack>
@@ -179,5 +209,5 @@ export default function App() {
           </Grid>
         </Container>
       </Box>
-    </ThemeProvider>
-   );
+       </ThemeProvider>
+  );
