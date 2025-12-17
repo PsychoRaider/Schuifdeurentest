@@ -1,20 +1,17 @@
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  AppBar, Toolbar, IconButton, Typography, Container, Grid, Paper,
-  TextField, Select, MenuItem, FormControl, InputLabel, Checkbox, FormControlLabel,
-  Box, Divider, Chip, Tooltip, CssBaseline, Button, Stack
+  AppBar, Toolbar, IconButton, Typography, Container, Grid, Box, CssBaseline, Tooltip, Button, Stack
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
-
+import DoorConfigurator from "./components/DoorConfigurator";
+import CombinedSummary from "./components/CombinedSummary";
 import { RULES } from "./lib/pricingRules";
-import { calculate } from "./lib/calculator";
-import PriceSummary from "./components/PriceSummary";
 
 export default function App() {
-  // --- Theme (fixed condition + SSR guard) ---
+  // --- Theme (robust init + persistence) ---
   const [mode, setMode] = useState(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem("themeMode") : null;
     if (stored === "light" || stored === "dark") return stored;
@@ -22,7 +19,6 @@ export default function App() {
       typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     return prefersDark ? "dark" : "light";
   });
-
   useEffect(() => {
     try { localStorage.setItem("themeMode", mode); } catch {}
   }, [mode]);
@@ -40,60 +36,44 @@ export default function App() {
     [mode]
   );
 
-  // --- State ---
-  const [product, setProduct] = useState("Type A");
-  const base = RULES.products["Type A"];
-  const [width, setWidth] = useState(base.baseW);
-  const [height, setHeight] = useState(base.baseH);
+  // --- Doors state ---
+  const createDefaultDoor = (id) => {
+    const base = RULES.products["Type A"];
+    return {
+      id,
+      product: "Type A",
+      width: base.baseW,
+      height: base.baseH,
+      options: [],
+      fixedOptionCounts: { Komgreep: 0, Haakslot: 0, Espagnolet: 0, "Horizontale Regel": 0 },
+      region: "Noord-Holland",
+      collapsed: false
+    };
+  };
 
-  // Checkbox options (union of areaOptions + flat selectable options)
-  const selectableOptions = useMemo(
-    () => [...Object.keys(RULES.areaOptions), ...Object.keys(RULES.selectableFlatOptions)],
-    []
-  );
-  const [options, setOptions] = useState([]);
+  const [doors, setDoors] = useState([createDefaultDoor(Date.now())]);
 
-  // Counted options
-  const countedOptionKeys = Object.keys(RULES.fixedCountOptions);
-  const [fixedOptionCounts, setFixedOptionCounts] = useState({
-    Komgreep: 0, Haakslot: 0, Espagnolet: 0, "Horizontale Regel": 0
-  });
+  const addDoor = () => setDoors((prev) => [...prev, createDefaultDoor(Date.now())]);
 
-  const [region, setRegion] = useState("Noord-Holland");
+  const updateDoor = (id, updated) =>
+    setDoors((prev) => prev.map((d) => (d.id === id ? updated : d)));
 
-  // --- Derived ---
-  const current = RULES.products[product];
-  const validW = width >= current.baseW && width <= current.maxW;
-  const validH = height >= current.baseH && height <= current.maxH;
-  const isValid = validW && validH;
+  const removeDoor = (id) =>
+    setDoors((prev) => {
+      const next = prev.filter((d) => d.id !== id);
+      return next.length === 0 ? [createDefaultDoor(Date.now())] : next;
+    });
 
-  const { total, breakdown, area } = useMemo(
-    () =>
-      calculate({
-        productKey: product,
-        widthMm: width,
-        heightMm: height,
-        selectedOptions: options,
-        fixedCounts: fixedOptionCounts,
-        region
-      }),
-    [product, width, height, options, fixedOptionCounts, region]
-  );
+  const duplicateDoor = (id) =>
+    setDoors((prev) => {
+      const src = prev.find((d) => d.id === id);
+      if (!src) return prev;
+      const clone = { ...src, id: Date.now(), collapsed: false };
+      // Optional: reset counts or keep them? We keep them for now.
+      return [...prev, clone];
+    });
 
-  // --- Handlers ---
-  const toggleOption = useCallback((opt, checked) => {
-    setOptions((prev) => (checked ? [...prev, opt] : prev.filter((o) => o !== opt)));
-  }, []);
-
-  const resetToBase = useCallback(() => {
-    const p = RULES.products["Type A"];
-    setProduct("Type A");
-    setWidth(p.baseW);
-    setHeight(p.baseH);
-    setOptions([]);
-    setFixedOptionCounts({ Komgreep: 0, Haakslot: 0, Espagnolet: 0, "Horizontale Regel": 0 });
-    setRegion("Noord-Holland");
-  }, []);
+  const resetAll = () => setDoors([createDefaultDoor(Date.now())]);
 
   // --- UI ---
   return (
@@ -114,148 +94,36 @@ export default function App() {
 
       <Box sx={{ bgcolor: "background.default", color: "text.primary", minHeight: "100vh" }}>
         <Container sx={{ py: 4 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              Configureer schuifdeuren
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button variant="outlined" onClick={addDoor}>+ Voeg deur toe</Button>
+              <Button variant="text" onClick={resetAll}>Reset alles</Button>
+            </Stack>
+          </Stack>
+
           <Grid container spacing={3}>
-            {/* LEFT: Inputs */}
+            {/* LEFT: Multiple door configurators */}
             <Grid item xs={12} md={7}>
-              <Paper variant="outlined" sx={{ p: 3 }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                  <Typography variant="h6">Configuratie</Typography>
-                  <Button onClick={resetToBase} variant="text">Reset</Button>
-                </Stack>
-
-                {/* Product & Region */}
-                <Grid container spacing={2} sx={{ mb: 1 }}>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel id="product-label">Product</InputLabel>
-                      <Select
-                        labelId="product-label"
-                        label="Product"
-                        value={product}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          setProduct(next);
-                          const p = RULES.products[next];
-                          setWidth(p.baseW);
-                          setHeight(p.baseH);
-                        }}
-                      >
-                        {Object.keys(RULES.products).map((p) => (
-                          <MenuItem key={p} value={p}>{p}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel id="region-label">Provincie</InputLabel>
-                      <Select
-                        labelId="region-label"
-                        label="Provincie"
-                        value={region}
-                        onChange={(e) => setRegion(e.target.value)}
-                      >
-                        {Object.keys(RULES.regions).map((r) => (
-                          <MenuItem key={r} value={r}>{r}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-
-                {/* Dimensions */}
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Breedte (mm)"
-                      type="number"
-                      fullWidth
-                      value={width}
-                      onChange={(e) => setWidth(Number(e.target.value))}
-                      onBlur={() => setWidth(Math.min(Math.max(width, current.baseW), current.maxW))}
-                      error={!validW}
-                      helperText={`Min: ${current.baseW} mm, Max: ${current.maxW} mm`}
-                      inputProps={{ min: current.baseW, max: current.maxW, step: 50 }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Hoogte (mm)"
-                      type="number"
-                      fullWidth
-                      value={height}
-                      onChange={(e) => setHeight(Number(e.target.value))}
-                      onBlur={() => setHeight(Math.min(Math.max(height, current.baseH), current.maxH))}
-                      error={!validH}
-                      helperText={`Min: ${current.baseH} mm, Max: ${current.maxH} mm`}
-                      inputProps={{ min: current.baseH, max: current.maxH, step: 50 }}
-                    />
-                  </Grid>
-                </Grid>
-
-                <Box sx={{ mt: 2, display: "flex", gap: 1, alignItems: "center" }}>
-                  <Chip label={`Oppervlakte: ${area.toFixed(2)} m²`} variant="outlined" />
-                  {!isValid ? <Chip color="error" label="Afmetingen buiten bereik" /> : null}
-                </Box>
-
-                <Divider sx={{ my: 3 }} />
-
-                {/* Selectable options */}
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Opties</Typography>
-                <Grid container spacing={1}>
-                  {selectableOptions.map((opt) => (
-                    <Grid item xs={12} sm={6} key={opt}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={options.includes(opt)}
-                            onChange={(e) => toggleOption(opt, e.target.checked)}
-                          />
-                        }
-                        label={opt}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-
-                <Divider sx={{ my: 3 }} />
-
-                {/* Fixed option counts */}
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Optieprijzen</Typography>
-                <Grid container spacing={2}>
-                  {countedOptionKeys.map((opt) => (
-                    <Grid item xs={12} sm={6} md={3} key={opt}>
-                      <TextField
-                        label={opt}
-                        type="number"
-                        fullWidth
-                        inputProps={{ min: 0, max: opt === "Horizontale Regel" ? 4 : 100 }}
-                        value={fixedOptionCounts[opt] ?? 0}
-                        onChange={(e) => setFixedOptionCounts((prev) => ({ ...prev, [opt]: Number(e.target.value) }))}
-                        helperText={
-                          opt === "Horizontale Regel"
-                            ? "Max 4, prijs per meter breedte"
-                            : `€${RULES.fixedCountOptions[opt].price} per stuk`
-                        }
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-
-                <Box sx={{ mt: 3 }}>
-                  <Tooltip title="Controleer de grenzen.">
-                    <span>
-                      <Button variant="contained" disabled={!isValid}>Berekenen</Button>
-                    </span>
-                  </Tooltip>
-                </Box>
-              </Paper>
+              <Stack spacing={2}>
+                {doors.map((door, idx) => (
+                  <DoorConfigurator
+                    key={door.id}
+                    door={door}
+                    index={idx}
+                    onUpdate={(updated) => updateDoor(door.id, updated)}
+                    onRemove={() => removeDoor(door.id)}
+                    onDuplicate={() => duplicateDoor(door.id)}
+                  />
+                ))}
+              </Stack>
             </Grid>
 
-            {/* RIGHT: Price Summary */}
+            {/* RIGHT: Combined summary */}
             <Grid item xs={12} md={5}>
-              <PriceSummary breakdown={breakdown} total={total} isValid={isValid} product={product} />
+              <CombinedSummary doors={doors} />
             </Grid>
           </Grid>
         </Container>
@@ -263,4 +131,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
