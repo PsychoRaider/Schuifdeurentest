@@ -41,7 +41,7 @@ export default function App() {
     try {
       localStorage.setItem("themeMode", mode);
     } catch {
-      // ignore
+      // ignore storage errors
     }
   }, [mode]);
 
@@ -150,9 +150,9 @@ export default function App() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
             <Box
               component="img"
-              src="/logo.png" // Use /public/logo.png
+              src="/logo.png"
               alt="Schuifdeuren"
-              sx={{ height: 28, display: "block" }}
+              sx={{ height: 28 }}
             />
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Prijs Calculator
@@ -208,6 +208,5 @@ export default function App() {
             </Grid>
           </Grid>
         </Container>
-      </Box>
-       </ThemeProvider>
-  );
+     
+
