@@ -7,7 +7,8 @@ export const RULES = {
     "Type C": { basePrice: 5725, baseW: 1600, baseH: 2100, maxW: 3830, maxH: 2650, widthIncPer100: 112, heightIncPer100: 104 },
     "Type D": { basePrice: 9194, baseW: 3200, baseH: 2100, maxW: 6000, maxH: 2650, widthIncPer100: 112, heightIncPer100: 208 },
     "Type E": { basePrice: 7214, baseW: 1600, baseH: 2100, maxW: 3830, maxH: 3000, widthIncPer100: 162, heightIncPer100: 104 },
-    "Type F": { basePrice: 10676, baseW: 3200, baseH: 2100, maxW: 6000, maxH: 3000, widthIncPer100: 162, heightIncPer100: 208 }
+    "Type F": { basePrice: 10676, baseW: 3200, baseH: 2100, maxW: 6000, maxH: 3000, widthIncPer100: 162, heightIncPer100: 208 },
+    "Type G": { basePrice: 7494, baseW: 2400, baseH: 2100, maxW: 6000, maxH: 2650, widthIncPer100: 112, heightIncPer100: 156 }
   },
 
   // Options priced per m²
