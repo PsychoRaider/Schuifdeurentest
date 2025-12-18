@@ -1,7 +1,17 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  AppBar, Toolbar, IconButton, Typography, Container, Grid, Box, CssBaseline, Tooltip, Button, Stack
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Container,
+  Grid,
+  Box,
+  CssBaseline,
+  Tooltip,
+  Button,
+  Stack
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -16,11 +26,16 @@ export default function App() {
     const stored = typeof window !== "undefined" ? localStorage.getItem("themeMode") : null;
     if (stored === "light" || stored === "dark") return stored;
     const prefersDark =
-      typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
     return prefersDark ? "dark" : "light";
   });
+
   useEffect(() => {
-    try { localStorage.setItem("themeMode", mode); } catch {}
+    try {
+      localStorage.setItem("themeMode", mode);
+    } catch {}
   }, [mode]);
 
   const theme = useMemo(
@@ -52,27 +67,20 @@ export default function App() {
   };
 
   const [doors, setDoors] = useState([createDefaultDoor(Date.now())]);
-
   const addDoor = () => setDoors((prev) => [...prev, createDefaultDoor(Date.now())]);
-
-  const updateDoor = (id, updated) =>
-    setDoors((prev) => prev.map((d) => (d.id === id ? updated : d)));
-
+  const updateDoor = (id, updated) => setDoors((prev) => prev.map((d) => (d.id === id ? updated : d)));
   const removeDoor = (id) =>
     setDoors((prev) => {
       const next = prev.filter((d) => d.id !== id);
       return next.length === 0 ? [createDefaultDoor(Date.now())] : next;
     });
-
   const duplicateDoor = (id) =>
     setDoors((prev) => {
       const src = prev.find((d) => d.id === id);
       if (!src) return prev;
       const clone = { ...src, id: Date.now(), collapsed: false };
-      // Optional: reset counts or keep them? We keep them for now.
       return [...prev, clone];
     });
-
   const resetAll = () => setDoors([createDefaultDoor(Date.now())]);
 
   // --- UI ---
@@ -81,11 +89,40 @@ export default function App() {
       <CssBaseline />
       <AppBar position="sticky" elevation={0}>
         <Toolbar>
+          {/* Clickable logo to external site */}
+          <Box
+            component="a"
+            href="https://www.plooijer.nl/"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              mr: 1.5,
+              // If the logo has a transparent or dark variant, this keeps it visible in dark mode:
+              // You can tweak this or remove it depending on your logo.
+              // p: 0.5, borderRadius: 1, bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "transparent"
+            }}
+            aria-label="Ga naar plooijer.nl"
+          >
+            <Box
+              component="img"
+              src="/logo.png"              // served from /public
+              alt="Plooijer logo"
+              sx={{ height: 32, width: "auto", display: "block" }}
+            />
+          </Box>
+
           <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
             Prijs Calculator
           </Typography>
+
           <Tooltip title={mode === "dark" ? "Schakel licht modus" : "Schakel donker modus"}>
-            <IconButton color="inherit" onClick={() => setMode(mode === "light" ? "dark" : "light")} aria-label="Toggle theme">
+            <IconButton
+              color="inherit"
+              onClick={() => setMode(mode === "light" ? "dark" : "light")}
+              aria-label="Toggle theme"
+            >
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
